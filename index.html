@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fish Predictor</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: #fff;
+        }
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            animation: fadeIn 2s ease-in-out;
+        }
+        h3 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            animation: fadeIn 2s ease-in-out;
+        }
+        input {
+            margin: 10px;
+            padding: 10px;
+            width: calc(100% - 22px);
+            border: none;
+            border-radius: 5px;
+            outline: none;
+            font-size: 1em;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            animation: fadeIn 2s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fish Predictor</h1>
+        <div>
+            <h3>Enter water parameters to predict the fish species.</h3>
+            <input id="ph" type="number" step="any" placeholder="pH" required>
+            <input id="temp" type="number" step="any" placeholder="Temperature" required>
+            <input id="turbidity" type="number" step="any" placeholder="Turbidity" required>
+            <button onclick="predictFish()">Predict</button>
+        </div>
+        <h2 id="result"></h2>
+    </div>
+
+    <script>
+        async function predictFish() {
+            const ph = parseFloat(document.getElementById('ph').value);
+            const temp = parseFloat(document.getElementById('temp').value);
+            const turbidity = parseFloat(document.getElementById('turbidity').value);
+            const resultElement = document.getElementById('result');
+            
+            if (isNaN(ph) || isNaN(temp) || isNaN(turbidity)) {
+                resultElement.innerText = 'Please enter valid inputs.';
+                resultElement.style.color = 'red';
+                return;
+            }
+
+            resultElement.innerText = 'Predicting...';
+            resultElement.style.color = 'white';
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ features: [ph, temp, turbidity] }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const result = await response.json();
+                if (result.error) {
+                    resultElement.innerText = `Error: ${result.error}`;
+                    resultElement.style.color = 'red';
+                } else {
+                    resultElement.innerText = `Prediction: ${result.prediction}`;
+                    resultElement.style.color = 'lightgreen';
+                }
+            } catch (error) {
+                resultElement.innerText = 'Error: Server is not running';
+                resultElement.style.color = 'red';
+            }
+        }
+
+        document.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                predictFish();
+            }
+        });
+    </script>
+</body>
+</html>
